@@ -8,12 +8,12 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 export const config = {
-  port: process.env.PORT || 4000,
-  env: process.env.NODE_ENV || 'development',
+  port: process.env.PORT || 3001,
+  env: process.env.NODE_ENV || 'production',
   mongodbUri: process.env.MONGODB_URI,
   jwtSecret: process.env.JWT_SECRET,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  mqttUrl: process.env.MQTT_URL || 'mqtt://localhost:1883',
+  mqttUrl: process.env.MQTT_URL || 'ws://archidtech.in:9001',
   namespace: process.env.IOT_NAMESPACE || 'archidtech'
 };
 

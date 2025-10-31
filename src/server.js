@@ -44,7 +44,7 @@ app.use("/api/devices", deviceRoutes);
     console.log("✅ MQTT client initialized");
 
     app.listen(config.port, () => {
-      console.log(`🚀 Server running at: http://192.168.1.80:${config.port}`);
+      console.log(`🚀 Server running at: http://archidtech.in:${config.port}`);
     });
   } catch (err) {
     console.error("❌ Fatal startup error:", err.message);
