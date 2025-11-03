@@ -1,27 +1,31 @@
-import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
+// src/config/env.js
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
-// Resolve .env path relative to project root
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+
+// Decide which .env file to load
+const envFile =
+  process.env.NODE_ENV === "production"
+    ? path.resolve(__dirname, "../../.env.production")
+    : path.resolve(__dirname, "../../.env.development");
+
+dotenv.config({ path: envFile });
 
 export const config = {
+  env: process.env.NODE_ENV || "development",
   port: process.env.PORT || 3001,
-  env: process.env.NODE_ENV || 'production',
   mongodbUri: process.env.MONGODB_URI,
   jwtSecret: process.env.JWT_SECRET,
-  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
-  mqttUrl: process.env.MQTT_URL || 'ws://archidtech.in:9001',
-  namespace: process.env.IOT_NAMESPACE || 'archidtech'
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
+  mqttUrl: process.env.MQTT_URL || "ws://archidtech.in:9001",
+  namespace: process.env.IOT_NAMESPACE || "archidtech",
 };
 
-// Debug log (optional, comment out after testing)
-console.log('Loaded env:', {
-  mongodbUri: config.mongodbUri,
-  mqttUrl: config.mqttUrl,
-});
+console.log(`🔧 Environment: ${config.env}`);
+console.log(`🌍 Using config file: ${envFile}`);
 
-if (!config.mongodbUri) throw new Error('MONGODB_URI missing in .env');
-if (!config.jwtSecret) throw new Error('JWT_SECRET missing in .env');
+if (!config.mongodbUri) throw new Error("❌ MONGODB_URI is missing");
+if (!config.jwtSecret) throw new Error("❌ JWT_SECRET is missing");
