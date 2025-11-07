@@ -54,7 +54,7 @@ app.use((err, req, res, next) => {
 
     const baseUrl =
       config.env === "production"
-        ? `https://archidtech.in:${config.port}`
+        ? `http://archidtech.in:${config.port}`
         : `http://localhost:${config.port}`;
 
     app.listen(config.port, "0.0.0.0", () => {
