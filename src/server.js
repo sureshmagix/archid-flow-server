@@ -6,10 +6,13 @@ import { getMqttClient } from "./mqtt/client.js";
 import userRoutes from "./routes/user.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import deviceRoutes from "./routes/device.routes.js";
+import profileRoutes from "./routes/profile.routes.js";
+
 
 const app = express();
 
 // ✅ Core Middlewares
+
 app.use(
   cors({
     origin: "*",
@@ -33,6 +36,7 @@ app.get("/", (req, res) => {
 app.use("/api", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/devices", deviceRoutes);
+app.use("/api/profile", profileRoutes);
 
 // ✅ Centralized Error Handling (optional, useful later)
 app.use((err, req, res, next) => {
