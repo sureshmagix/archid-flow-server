@@ -7,6 +7,7 @@ import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import deviceRoutes from './routes/device.routes.js';
 
+
 const app = express();
 app.use(helmet());
 app.use(cors());
@@ -20,6 +21,8 @@ app.get('/health', (req, res) => res.json({ status: 'ok', service:
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/devices', deviceRoutes);
+
+
 app.use((req, res) => res.status(404).json({ message: 'Not found' }));
 
 export default app;
