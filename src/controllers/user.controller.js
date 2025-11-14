@@ -42,6 +42,7 @@ export async function signup(req, res) {
       token,
       user: {
         _id: newUser._id,
+        id: newUser._id, // convenience for mobile app
         name: newUser.name,
         mobile: newUser.mobile,
       },
@@ -57,10 +58,10 @@ export async function me(req, res) {
   return res.json({ user: req.user });
 }
 
-// 🔹 PROFILE UPDATE (PUT)
+// 🔹 PROFILE UPDATE (PUT) — no userType
 export async function updateProfile(req, res) {
-  const { name, email, gender, address, taluk, pincode, userType } = req.body;
-  const updateData = { name, email, gender, address, taluk, pincode, userType };
+  const { name, email, gender, address, taluk, pincode } = req.body;
+  const updateData = { name, email, gender, address, taluk, pincode };
 
   Object.keys(updateData).forEach(
     (key) => updateData[key] === undefined && delete updateData[key]

@@ -1,40 +1,40 @@
 // ==============================================
-// 🔹 Device Routes — Realm + Cloud Sync
+// 🔹 Device Routes — Owner + Shared Users
 // ==============================================
 
 import { Router } from 'express';
 import { auth } from '../middleware/auth.js';
-import { body } from 'express-validator';
-import { validate } from '../middleware/validate.js';
 import {
-  registerDevice,
+  syncDevice,
+  shareUserDevice,
+  deleteDevice,
+  getUserDevices,
   myDevices,
   sendCommand,
   recentTelemetry,
-  getUserDevices,
-  syncDevice,
-  deleteDevice,
+  registerDevice,
 } from '../controllers/device.controller.js';
 
 const router = Router();
 
-// 🔹 Legacy Registration
-router.post('/register', auth, [body('deviceId').notEmpty()], validate, registerDevice);
-
-// 🔹 Sync Device (used by React Native Realm app)
+// 🔹 Realm/mobile sync add/update
 router.post('/sync', auth, syncDevice);
 
-// 🔹 Delete Device (used when removing from app)
+// 🔹 Share device with up to 3 users (2 control + 1 view)
+router.post('/share', auth, shareUserDevice);
+
+// 🔹 Delete device (owner) / remove shared access (shared user)
 router.delete('/:deviceId', auth, deleteDevice);
 
-// 🔹 Fetch all devices for a user (after login)
+// 🔹 Devices for user (owned + shared)
 router.get('/user/:userId', auth, getUserDevices);
-
-// 🔹 Logged-in user's devices
 router.get('/', auth, myDevices);
 
-// 🔹 Command and telemetry
+// 🔹 Commands + Telemetry
 router.post('/:id/command', auth, sendCommand);
 router.get('/:id/telemetry', auth, recentTelemetry);
+
+// 🔹 Legacy register
+router.post('/register', auth, registerDevice);
 
 export default router;
