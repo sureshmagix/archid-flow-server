@@ -8,6 +8,7 @@ import { auth } from "../middleware/auth.js";
 import {
   syncDevice,
   shareUserDevice,
+  unshareUserDevice,
   deleteDevice,
   getUserDevices,
   myDevices,
@@ -21,8 +22,11 @@ const router = Router();
 // Main add/update route
 router.post("/sync", auth, syncDevice);
 
-// Share device
+// Share device (your original controller)
 router.post("/share", auth, shareUserDevice);
+
+// Unshare device (new)
+router.post("/share/remove", auth, unshareUserDevice);
 
 // Delete device
 router.delete("/:deviceId", auth, deleteDevice);

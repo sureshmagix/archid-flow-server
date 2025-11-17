@@ -4,6 +4,22 @@
 
 import mongoose from "mongoose";
 
+const sharedUserSchema = new mongoose.Schema(
+  {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+
+    // UI needs username
+    username: { type: String, trim: true },
+
+    access: {
+      type: String,
+      enum: ["control", "view"],
+      default: "view",
+    },
+  },
+  { _id: false }
+);
+
 const DeviceSchema = new mongoose.Schema(
   {
     deviceId: {
@@ -21,23 +37,15 @@ const DeviceSchema = new mongoose.Schema(
     topic: { type: String, trim: true },
     controlTopic: { type: String, trim: true },
 
-    // 🔥 Correct owner assignment
+    // 🔥 Owner
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
 
-    sharedUsers: [
-      {
-        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        access: {
-          type: String,
-          enum: ["control", "view"],
-          default: "view",
-        },
-      },
-    ],
+    // 🔥 Shared Users
+    sharedUsers: [sharedUserSchema],
 
     status: {
       type: String,
@@ -46,12 +54,12 @@ const DeviceSchema = new mongoose.Schema(
     },
 
     lastSeenAt: { type: Date },
-
     meta: mongoose.Schema.Types.Mixed,
   },
   { timestamps: true }
 );
 
+// Indexing
 DeviceSchema.index({ owner: 1, deviceId: 1 });
 
 export default mongoose.model("Device", DeviceSchema);
