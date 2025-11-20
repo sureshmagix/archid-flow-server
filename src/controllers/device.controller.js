@@ -248,39 +248,79 @@ export async function deleteDevice(req, res) {
     const { deviceId } = req.params;
     const userId = req.user._id;
 
+    // 1️⃣ Fetch device
     const device = await Device.findOne({ deviceId });
-    if (!device)
-      return res.status(404).json({ success: false, message: "Device not found" });
+    if (!device) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Device not found" });
+    }
 
     const isOwner = String(device.owner) === String(userId);
 
-    // ✔ Shared user → remove own access only
+    // ================================================
+    // 2️⃣ If shared user → remove only their access
+    // ================================================
     if (!isOwner) {
       const beforeCount = device.sharedUsers.length;
+
       device.sharedUsers = device.sharedUsers.filter(
         (u) => String(u.userId) !== String(userId)
       );
 
-      if (beforeCount === device.sharedUsers.length)
+      if (beforeCount === device.sharedUsers.length) {
         return res.status(403).json({
           success: false,
           message: "You do not have shared access",
         });
+      }
 
       await device.save();
-      return res.json({ success: true, message: "Shared access removed" });
+
+      // ⭐ Also remove from user.sharedDevices list
+      await User.updateOne(
+        { _id: userId },
+        { $pull: { sharedDevices: { deviceId } } }
+      );
+
+      return res.json({
+        success: true,
+        message: "Shared access removed successfully",
+      });
     }
 
-    // ✔ Owner → delete entire device
+    // ================================================
+    // 3️⃣ Owner → Delete device everywhere
+    // ================================================
+
+    // Delete the device document
     await Device.deleteOne({ _id: device._id });
+
+    // Delete all telemetry for that device
     await Telemetry.deleteMany({ deviceId });
 
-    return res.json({ success: true, message: "Device deleted successfully" });
+    // ⭐ Remove device from ALL users' sharedDevices lists
+    await User.updateMany(
+      {},
+      { $pull: { sharedDevices: { deviceId } } }
+    );
+
+    // ⭐ Also remove from OWNER's device list if stored anywhere
+    await User.updateOne(
+      { _id: device.owner },
+      { $pull: { devices: { deviceId } } }
+    );
+
+    return res.json({
+      success: true,
+      message: "Device deleted successfully for all users",
+    });
   } catch (err) {
     console.error("❌ deleteDevice error:", err);
     res.status(500).json({ success: false, message: err.message });
   }
 }
+
 
 // -------------------------------------------------
 // 🔸 Get Devices (Owner + Shared)
