@@ -1,5 +1,5 @@
 // ==============================================
-// 🔹 Device Controller — Owner + Shared Users Rules (UPDATED FINAL VERSION)
+// 🔹 Device Controller — Owner + Shared Users Rules (FINAL UPDATED VERSION)
 // ==============================================
 
 import Device from '../models/Device.js';
@@ -16,7 +16,9 @@ export async function syncDevice(req, res) {
     const userId = req.user._id;
 
     if (!id)
-      return res.status(400).json({ success: false, message: "Device ID required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Device ID required" });
 
     let device = await Device.findOne({ deviceId: id });
 
@@ -26,19 +28,20 @@ export async function syncDevice(req, res) {
     if (device) {
       const isOwner = String(device.owner) === String(userId);
       const shared = device.sharedUsers.find(
-        (u) => String(u.userId) === String(userId)
+        u => String(u.userId) === String(userId)
       );
 
       // ❌ Already owned by another user
       if (!isOwner && !shared) {
         return res.status(403).json({
           success: false,
-          message: "Device already owned by another user. Ask the owner to share it.",
+          message:
+            "Device already owned by another user. Ask the owner to share it.",
           code: "DEVICE_ALREADY_OWNED",
         });
       }
 
-      // ✔ Shared user → just return device
+      // ✔ Shared user → just return device, do not modify anything
       if (!isOwner && shared) {
         return res.json({
           success: true,
@@ -53,7 +56,7 @@ export async function syncDevice(req, res) {
         device.owner = userId;
       }
 
-      // ✔ Owner can update device fields
+      // ✔ Owner updates device fields
       device.name = name ?? device.name;
       device.type = type ?? device.type;
       device.topic = topic ?? device.topic;
@@ -91,7 +94,9 @@ export async function registerDevice(req, res) {
     const { deviceId, name, meta } = req.body;
 
     if (!deviceId)
-      return res.status(400).json({ success: false, message: "deviceId required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "deviceId required" });
 
     const exists = await Device.findOne({ deviceId });
     if (exists) {
@@ -132,14 +137,21 @@ export async function shareUserDevice(req, res) {
       });
 
     if (!["control", "view"].includes(access))
-      return res.status(400).json({ success: false, message: "Invalid access type" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid access type" });
 
     const device = await Device.findOne({ deviceId });
     if (!device)
-      return res.status(404).json({ success: false, message: "Device not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Device not found" });
 
     if (String(device.owner) !== String(ownerId))
-      return res.status(403).json({ success: false, message: "Only owner can share this device" });
+      return res.status(403).json({
+        success: false,
+        message: "Only owner can share this device",
+      });
 
     // Find user by mobile or username
     const targetUser = await User.findOne({
@@ -147,7 +159,9 @@ export async function shareUserDevice(req, res) {
     });
 
     if (!targetUser)
-      return res.status(404).json({ success: false, message: "User does not exist" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User does not exist" });
 
     // Prevent sharing with yourself
     if (String(targetUser._id) === String(ownerId))
@@ -157,26 +171,42 @@ export async function shareUserDevice(req, res) {
       });
 
     // Prevent duplicate share
-    if (device.sharedUsers.some((u) => String(u.userId) === String(targetUser._id)))
-      return res.status(400).json({ success: false, message: "User already added" });
+    if (
+      device.sharedUsers.some(
+        u => String(u.userId) === String(targetUser._id)
+      )
+    )
+      return res
+        .status(400)
+        .json({ success: false, message: "User already added" });
 
-    // Apply your limits
-    const controlCount = device.sharedUsers.filter((u) => u.access === "control").length;
-    const viewCount = device.sharedUsers.filter((u) => u.access === "view").length;
+    // Enforce limits
+    const controlCount = device.sharedUsers.filter(
+      u => u.access === "control"
+    ).length;
+    const viewCount = device.sharedUsers.filter(
+      u => u.access === "view"
+    ).length;
 
     if (device.sharedUsers.length >= 3)
-      return res.status(400).json({ message: "Max 3 shared users allowed" });
+      return res
+        .status(400)
+        .json({ message: "Max 3 shared users allowed" });
 
     if (access === "control" && controlCount >= 2)
-      return res.status(400).json({ message: "Only 2 control users allowed" });
+      return res
+        .status(400)
+        .json({ message: "Only 2 control users allowed" });
 
     if (access === "view" && viewCount >= 1)
-      return res.status(400).json({ message: "Only 1 view user allowed" });
+      return res
+        .status(400)
+        .json({ message: "Only 1 view user allowed" });
 
     // Save shared user
     device.sharedUsers.push({
       userId: targetUser._id,
-      username: targetUser.username || targetUser.mobile, // 🔥 ADDED
+      username: targetUser.username || targetUser.mobile,
       access,
     });
 
@@ -209,9 +239,10 @@ export async function unshareUserDevice(req, res) {
 
     const device = await Device.findOne({ deviceId });
     if (!device)
-      return res.status(404).json({ success: false, message: "Device not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Device not found" });
 
-    // Only owner can unshare
     if (String(device.owner) !== String(ownerId))
       return res.status(403).json({
         success: false,
@@ -221,13 +252,21 @@ export async function unshareUserDevice(req, res) {
     const before = device.sharedUsers.length;
 
     device.sharedUsers = device.sharedUsers.filter(
-      (u) => String(u.userId) !== String(userId)
+      u => String(u.userId) !== String(userId)
     );
 
     if (before === device.sharedUsers.length)
-      return res.status(400).json({ success: false, message: "User not found in share list" });
+      return res
+        .status(400)
+        .json({ success: false, message: "User not found in share list" });
 
     await device.save();
+
+    // Also remove from user's shared list
+    await User.updateOne(
+      { _id: userId },
+      { $pull: { sharedDevices: { deviceId } } }
+    );
 
     return res.json({
       success: true,
@@ -259,13 +298,13 @@ export async function deleteDevice(req, res) {
     const isOwner = String(device.owner) === String(userId);
 
     // ================================================
-    // 2️⃣ If shared user → remove only their access
+    // 2️⃣ SHARED USER → remove ONLY their access
     // ================================================
     if (!isOwner) {
       const beforeCount = device.sharedUsers.length;
 
       device.sharedUsers = device.sharedUsers.filter(
-        (u) => String(u.userId) !== String(userId)
+        u => String(u.userId) !== String(userId)
       );
 
       if (beforeCount === device.sharedUsers.length) {
@@ -277,7 +316,6 @@ export async function deleteDevice(req, res) {
 
       await device.save();
 
-      // ⭐ Also remove from user.sharedDevices list
       await User.updateOne(
         { _id: userId },
         { $pull: { sharedDevices: { deviceId } } }
@@ -290,26 +328,30 @@ export async function deleteDevice(req, res) {
     }
 
     // ================================================
-    // 3️⃣ Owner → Delete device everywhere
+    // 3️⃣ OWNER — Delete device everywhere
     // ================================================
 
-    // Delete the device document
-    await Device.deleteOne({ _id: device._id });
+    // Clear shared users first
+    device.sharedUsers = [];
+    await device.save();
 
-    // Delete all telemetry for that device
-    await Telemetry.deleteMany({ deviceId });
-
-    // ⭐ Remove device from ALL users' sharedDevices lists
+    // Remove from all shared users
     await User.updateMany(
-      {},
+      { "sharedDevices.deviceId": deviceId },
       { $pull: { sharedDevices: { deviceId } } }
     );
 
-    // ⭐ Also remove from OWNER's device list if stored anywhere
+    // Remove from owner devices list
     await User.updateOne(
       { _id: device.owner },
       { $pull: { devices: { deviceId } } }
     );
+
+    // Delete telemetry
+    await Telemetry.deleteMany({ deviceId });
+
+    // Delete the actual device
+    await Device.deleteOne({ _id: device._id });
 
     return res.json({
       success: true,
@@ -320,7 +362,6 @@ export async function deleteDevice(req, res) {
     res.status(500).json({ success: false, message: err.message });
   }
 }
-
 
 // -------------------------------------------------
 // 🔸 Get Devices (Owner + Shared)
@@ -358,10 +399,14 @@ export async function sendCommand(req, res) {
   });
 
   if (!device)
-    return res.status(404).json({ success: false, message: "Device not found" });
+    return res
+      .status(404)
+      .json({ success: false, message: "Device not found" });
 
   const isOwner = String(device.owner) === String(userId);
-  const shared = device.sharedUsers.find((u) => String(u.userId) === String(userId));
+  const shared = device.sharedUsers.find(
+    u => String(u.userId) === String(userId)
+  );
 
   if (!isOwner && (!shared || shared.access !== "control"))
     return res.status(403).json({
@@ -387,11 +432,15 @@ export async function recentTelemetry(req, res) {
 
   const device = await Device.findOne({ deviceId: id });
   if (!device)
-    return res.status(404).json({ success: false, message: "Device not found" });
+    return res
+      .status(404)
+      .json({ success: false, message: "Device not found" });
 
   const allowed =
     String(device.owner) === String(userId) ||
-    device.sharedUsers.some((u) => String(u.userId) === String(userId));
+    device.sharedUsers.some(
+      u => String(u.userId) === String(userId)
+    );
 
   if (!allowed)
     return res.status(403).json({

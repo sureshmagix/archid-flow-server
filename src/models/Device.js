@@ -1,5 +1,5 @@
 // ==============================================
-// 🔹 Device Model — Owner + Shared Users (FINAL)
+// 🔹 Device Model — Owner + Shared Users (UPDATED FINAL VERSION)
 // ==============================================
 
 import mongoose from "mongoose";
@@ -8,7 +8,6 @@ const sharedUserSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 
-    // UI needs username
     username: { type: String, trim: true },
 
     access: {
@@ -54,12 +53,23 @@ const DeviceSchema = new mongoose.Schema(
     },
 
     lastSeenAt: { type: Date },
+
     meta: mongoose.Schema.Types.Mixed,
   },
   { timestamps: true }
 );
 
-// Indexing
+// ==============================================
+// ⭐ VIRTUAL FIELD — accessRole
+// ==============================================
+DeviceSchema.virtual("accessRole").get(function () {
+  return this._accessRole || "owner";
+});
+
+DeviceSchema.set("toJSON", { virtuals: true });
+DeviceSchema.set("toObject", { virtuals: true });
+
+// Indexes
 DeviceSchema.index({ owner: 1, deviceId: 1 });
 
 export default mongoose.model("Device", DeviceSchema);

@@ -9,11 +9,21 @@ let client;
 export function getMqttClient() {
   if (client) return client;
 
+  // client = mqtt.connect(config.mqttUrl, {
+  //   reconnectPeriod: 3000,
+  //   clean: true,
+  //   clientId: `archidflow_api_${Math.random().toString(16).slice(2)}`,
+  // });
+
   client = mqtt.connect(config.mqttUrl, {
-    reconnectPeriod: 3000,
-    clean: true,
-    clientId: `archidflow_api_${Math.random().toString(16).slice(2)}`,
-  });
+  username: process.env.MQTT_USERNAME || "admin",
+  password: process.env.MQTT_PASSWORD || "suresh123",
+  reconnectPeriod: 3000,
+  connectTimeout: 20000,
+  clean: true,
+  clientId: `archidflow_api_${Math.random().toString(16).slice(2)}`
+});
+
 
   client.on("connect", () => {
     console.log(`✅ MQTT connected: ${config.mqttUrl}`);
